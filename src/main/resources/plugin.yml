@@ -1,0 +1,6 @@
+name: RedstoneProfiler
+version: 1.0
+api-version: 1.21
+main: com.golfing8.profiler.RedstoneProfiler
+description: Plugin for profiling redstone events
+load: POSTWORLD
