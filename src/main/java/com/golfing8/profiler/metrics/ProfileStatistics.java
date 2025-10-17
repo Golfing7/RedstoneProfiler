@@ -6,30 +6,8 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public final class ProfileStatistics implements ProfilerResults {
-    public final long samples;
-    public final long average;
-    public final long max;
-    public final long min;
-    public final long sum;
-    public final long average95;
-    public final long max95;
-    public final long min95;
-    public final long sum95;
-    public final double stdDev;
-
-    public ProfileStatistics(long samples, long average, long max, long min, long sum, long average95, long max95, long min95, long sum95, double stdDev) {
-        this.samples = samples;
-        this.average = average;
-        this.max = max;
-        this.min = min;
-        this.sum = sum;
-        this.average95 = average95;
-        this.max95 = max95;
-        this.min95 = min95;
-        this.sum95 = sum95;
-        this.stdDev = stdDev;
-    }
+public record ProfileStatistics(long samples, long average, long max, long min, long sum, long average95, long max95,
+                                long min95, long sum95, double stdDev) implements ProfilerResults {
 
     public static ProfileStatistics construct(LongList statistics) {
         long sum = 0L;

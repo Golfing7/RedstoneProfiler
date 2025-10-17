@@ -36,16 +36,16 @@ public class HighLowAverageProfiler implements IMethodProfiler{
             ProfileStatistics statistics = ProfileStatistics.construct(values);
 
             consumer.accept("&b&lDATA ON: " + key);
-            consumer.accept("&aSamples: &e" + FORMATTER.format(statistics.samples));
-            consumer.accept("&aAverage: &e" + FORMATTER.format(statistics.average));
-            consumer.accept("&aMax: &c" + FORMATTER.format(statistics.max));
-            consumer.accept("&aMin: &2" + FORMATTER.format(statistics.min));
-            consumer.accept("&aSum: &b" + FORMATTER.format(statistics.sum));
-            consumer.accept("&aAverage 95%: &e" + FORMATTER.format(statistics.average95));
-            consumer.accept("&aMax 95%: &c" + FORMATTER.format(statistics.max95));
-            consumer.accept("&aMin 95%: &2" + FORMATTER.format(statistics.min95));
-            consumer.accept("&aSum 95%: &b" + FORMATTER.format(statistics.sum95));
-            consumer.accept("&aStd Dev: &5" + FORMATTER.format(statistics.stdDev));
+            consumer.accept("&aSamples: &e" + FORMATTER.format(statistics.samples()));
+            consumer.accept("&aAverage: &e" + FORMATTER.format(statistics.average()));
+            consumer.accept("&aMax: &c" + FORMATTER.format(statistics.max()));
+            consumer.accept("&aMin: &2" + FORMATTER.format(statistics.min()));
+            consumer.accept("&aSum: &b" + FORMATTER.format(statistics.sum()));
+            consumer.accept("&aAverage 95%: &e" + FORMATTER.format(statistics.average95()));
+            consumer.accept("&aMax 95%: &c" + FORMATTER.format(statistics.max95()));
+            consumer.accept("&aMin 95%: &2" + FORMATTER.format(statistics.min95()));
+            consumer.accept("&aSum 95%: &b" + FORMATTER.format(statistics.sum95()));
+            consumer.accept("&aStd Dev: &5" + FORMATTER.format(statistics.stdDev()));
         }
     }
 
