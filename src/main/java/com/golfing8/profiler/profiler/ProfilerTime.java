@@ -28,10 +28,12 @@ public class ProfilerTime extends ProfilerAbstract<ProfilerTime.Results> {
             for (int i = 0; i < repetitions; i++) {
                 getExperiment().setupExperiment();
 
+                // Ignite
                 profiler.start(keyI);
                 getExperiment().ignite();
                 profiler.stop(keyI);
 
+                // Extinguish
                 profiler.start(keyE);
                 getExperiment().extinguish();
                 profiler.stop(keyE);
