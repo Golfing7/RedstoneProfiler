@@ -1,5 +1,6 @@
 package com.golfing8.profiler.struct;
 
+import com.golfing8.profiler.RedstoneProfiler;
 import io.papermc.paper.configuration.WorldConfiguration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,8 @@ import java.nio.file.Files;
  */
 @Getter
 public class ProfilingWorld {
+    private static final int LOAD_CHUNK_RADIUS = 12;
+
     private final String worldName;
     /** The world in which we are profiling */
     private World world;
@@ -52,6 +55,14 @@ public class ProfilingWorld {
             throw new NullPointerException("Created world is null");
 
         this.world.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
+
+        // Add chunk tickets for a large area around the center
+        // to ensure chunk loading isn't a factor in timing.
+        for (int x = -LOAD_CHUNK_RADIUS; x <= LOAD_CHUNK_RADIUS; x++) {
+            for (int z = -LOAD_CHUNK_RADIUS; z <= LOAD_CHUNK_RADIUS; z++) {
+                this.world.addPluginChunkTicket(x, z, RedstoneProfiler.getInstance());
+            }
+        }
     }
 
     /**

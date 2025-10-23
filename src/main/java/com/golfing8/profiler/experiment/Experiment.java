@@ -17,12 +17,15 @@ import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -40,7 +43,7 @@ public class Experiment {
     /** The path to the schematic */
     private final Path schematicPath;
     /** The position to 'ignite' the experiment */
-    private final BlockPosition ignitionPosition;
+    private List<BlockPosition> ignitionPositions;
     /** A cached clipboard for the schematic */
     private @Nullable Clipboard clipboard;
     /** If the experiment has been pasted */
@@ -54,7 +57,9 @@ public class Experiment {
             throw new IllegalStateException("Cannot execute experiment that has not been pasted");
 
         // Turns on whatever redstone contraption has been prepared with a redstone block
-        world.getWorld().getBlockAt(ignitionPosition.toLocation(world.getWorld())).setType(Material.REDSTONE_BLOCK);
+        for (BlockPosition position : ignitionPositions) {
+            world.getWorld().getBlockAt(position.blockX(), position.blockY(), position.blockZ()).setType(Material.REDSTONE_BLOCK);
+        }
     }
 
     /**
@@ -65,7 +70,9 @@ public class Experiment {
             throw new IllegalStateException("Cannot execute experiment that has not been pasted");
 
         // Removes the power source from the prepared contraption
-        world.getWorld().getBlockAt(ignitionPosition.toLocation(world.getWorld())).setType(Material.AIR);
+        for (BlockPosition position : ignitionPositions) {
+            world.getWorld().getBlockAt(position.blockX(), position.blockY(), position.blockZ()).setType(Material.EMERALD_BLOCK);
+        }
     }
 
     /**
@@ -103,6 +110,21 @@ public class Experiment {
             Operations.complete(operation);
         } catch (WorldEditException exc) {
             throw new RuntimeException("Failed to paste clipboard file " + schematicPath, exc);
+        }
+
+        // Detect all ignition positions
+        if (ignitionPositions == null) {
+            ignitionPositions = new ArrayList<>();
+            BlockVector3 dimensions = clipboard.getDimensions();
+            for (int x = PASTE_LOCATION.blockX(); x < PASTE_LOCATION.blockX() + dimensions.x(); x++) {
+                for (int y = PASTE_LOCATION.blockY(); y < PASTE_LOCATION.blockY() + dimensions.y(); y++) {
+                    for (int z = PASTE_LOCATION.blockZ(); z < PASTE_LOCATION.blockZ() + dimensions.z(); z++) {
+                        if (world.getWorld().getBlockAt(x, y, z).getType() == Material.EMERALD_BLOCK) {
+                            ignitionPositions.add(Position.block(x, y, z));
+                        }
+                    }
+                }
+            }
         }
     }
 }
