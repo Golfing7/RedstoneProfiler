@@ -4,3 +4,4 @@ api-version: 1.21
 main: com.golfing8.profiler.RedstoneProfiler
 description: Plugin for profiling redstone events
 load: POSTWORLD
+depend: [WorldEdit]
