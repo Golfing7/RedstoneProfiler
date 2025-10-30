@@ -1,5 +1,6 @@
 package com.golfing8.profiler.experiment;
 
+import com.golfing8.profiler.RedstoneProfiler;
 import com.golfing8.profiler.struct.ProfilingWorld;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -16,14 +17,14 @@ import com.sk89q.worldedit.session.ClipboardHolder;
 import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class Experiment {
     /** The world in which this experiment takes place */
     private final ProfilingWorld world;
     /** The path to the schematic */
-    private final Path schematicPath;
+    private final String schematicName;
     /** The position to 'ignite' the experiment */
     private List<BlockPosition> ignitionPositions;
     /** A cached clipboard for the schematic */
@@ -49,10 +50,11 @@ public class Experiment {
     /** If the experiment has been pasted */
     private boolean pasted;
 
-    public Experiment(String name, ProfilingWorld world, Path schematicPath) {
+    public Experiment(String name, ProfilingWorld world, String schematicName) {
         this.name = name;
         this.world = world;
-        this.schematicPath = schematicPath;
+        this.schematicName = schematicName;
+        this.loadSchematicFromJar();
     }
 
     /**
@@ -93,6 +95,8 @@ public class Experiment {
      * Attempts to paste the schematic
      */
     private void tryPasteSchematic() {
+        Path serverDataFolder = RedstoneProfiler.getInstance().getDataPath();
+        Path schematicPath = serverDataFolder.resolve("schematics").resolve(schematicName);
         if (clipboard == null) {
             ClipboardFormat format = ClipboardFormats.findByFile(schematicPath.toFile());
             if (format == null) {
@@ -118,7 +122,7 @@ public class Experiment {
             throw new RuntimeException("Failed to paste clipboard file " + schematicPath, exc);
         }
 
-        // Detect all ignition positions
+        // Detect all powerOn positions
         if (ignitionPositions == null) {
             ignitionPositions = new ArrayList<>();
             BlockVector3 dimensions = clipboard.getDimensions();
@@ -131,6 +135,23 @@ public class Experiment {
                     }
                 }
             }
+        }
+    }
+
+    private void loadSchematicFromJar() {
+        Path serverDataFolder = RedstoneProfiler.getInstance().getDataPath();
+        Path schematicPath = serverDataFolder.resolve("schematics").resolve(schematicName);
+        if (Files.exists(schematicPath))
+            return;
+
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("/schematics/" + schematicName)) {
+            if (stream == null)
+                throw new NullPointerException("Schematic " + schematicPath + " not found in jar");
+
+            Files.createDirectories(schematicPath.getParent());
+            Files.write(schematicPath, stream.readAllBytes(), StandardOpenOption.CREATE);
+        } catch (IOException exc) {
+            throw new RuntimeException("Failed to copy schematic from jar", exc);
         }
     }
 }

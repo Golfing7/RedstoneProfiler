@@ -71,7 +71,7 @@ public class ProfilerMetrics extends ProfilerAbstract<ProfilerMetrics.Results> {
         redstone++;
     }
 
-    public record Results(Tracker ignition, Tracker extinguish) implements ProfilerResults {
+    public record Results(Tracker powerOn, Tracker powerOff) implements ProfilerResults {
         public record Tracker(ProfileStatistics physics, ProfileStatistics redstone) {}
     }
 }

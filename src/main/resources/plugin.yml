@@ -5,3 +5,6 @@ main: com.golfing8.profiler.RedstoneProfiler
 description: Plugin for profiling redstone events
 load: POSTWORLD
 depend: [WorldEdit]
+commands:
+  profile:
+    description: "Run the profiling system"

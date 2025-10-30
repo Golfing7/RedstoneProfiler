@@ -16,7 +16,7 @@ public class ProfilerTime extends ProfilerAbstract<ProfilerTime.Results> {
     }
 
     @Override
-    public Optional<Results> executeInternal(int repetitions) {
+    protected Optional<Results> executeInternal(int repetitions) {
         // Perform the setup step
         IMethodProfiler profiler = IMethodProfiler.getDefaultProfiler();
         profiler.resetData();
@@ -46,5 +46,5 @@ public class ProfilerTime extends ProfilerAbstract<ProfilerTime.Results> {
         }
     }
 
-    public record Results(ProfileStatistics ignition, ProfileStatistics extinguish) implements ProfilerResults {}
+    public record Results(ProfileStatistics powerOn, ProfileStatistics powerOff) implements ProfilerResults {}
 }

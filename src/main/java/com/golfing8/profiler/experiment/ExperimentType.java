@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 @AllArgsConstructor @Getter
 public enum ExperimentType {
-    FLOOD((world) -> new Experiment("flood", world, Path.of("flood.schem"))),
+    FLOOD((world) -> new Experiment("flood", world, "flood.schem")),
     ;
 
     final Function<ProfilingWorld, Experiment> experiment;

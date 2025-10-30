@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public record ProfileStatistics(long samples, long average, long max, long min, long sum, long average95, long max95,
-                                long min95, long sum95, double stdDev) implements ProfilerResults {
+                                long min95, long sum95, double stdDev, long[] data) implements ProfilerResults {
 
     public static ProfileStatistics construct(LongList statistics) {
         long sum = 0L;
@@ -44,6 +44,6 @@ public record ProfileStatistics(long samples, long average, long max, long min, 
         }
 
         long average95 = sum95 / statistics.size();
-        return new ProfileStatistics(statistics.size(), average, max, min, sum, average95, max95, min95, sum95, stdDev);
+        return new ProfileStatistics(statistics.size(), average, max, min, sum, average95, max95, min95, sum95, stdDev, statistics.toLongArray());
     }
 }
