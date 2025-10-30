@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Represents a single type of experiment.
  */
-@RequiredArgsConstructor @SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings("UnstableApiUsage")
 public class Experiment {
     private static final BlockPosition PASTE_LOCATION = Position.block(0, 0, 0);
 
@@ -48,6 +48,12 @@ public class Experiment {
     private @Nullable Clipboard clipboard;
     /** If the experiment has been pasted */
     private boolean pasted;
+
+    public Experiment(String name, ProfilingWorld world, Path schematicPath) {
+        this.name = name;
+        this.world = world;
+        this.schematicPath = schematicPath;
+    }
 
     /**
      * Ignites the redstone of this experiment
