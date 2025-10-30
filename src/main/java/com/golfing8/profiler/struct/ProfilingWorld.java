@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
+import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public class ProfilingWorld {
      * @param implementation the implementation
      */
     public void setImplementation(@NotNull WorldConfiguration.Misc.RedstoneImplementation implementation) {
-        ((ServerLevel) world).getLevel().paperConfig().misc.redstoneImplementation = implementation;
+        ((CraftWorld) world).getHandle().paperConfig().misc.redstoneImplementation = implementation;
     }
 
     private static WorldCreator buildCreator(String worldName) {

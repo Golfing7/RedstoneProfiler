@@ -126,11 +126,12 @@ public class Experiment {
         if (ignitionPositions == null) {
             ignitionPositions = new ArrayList<>();
             BlockVector3 dimensions = clipboard.getDimensions();
-            for (int x = PASTE_LOCATION.blockX(); x < PASTE_LOCATION.blockX() + dimensions.x(); x++) {
-                for (int y = PASTE_LOCATION.blockY(); y < PASTE_LOCATION.blockY() + dimensions.y(); y++) {
-                    for (int z = PASTE_LOCATION.blockZ(); z < PASTE_LOCATION.blockZ() + dimensions.z(); z++) {
-                        if (world.getWorld().getBlockAt(x, y, z).getType() == Material.EMERALD_BLOCK) {
-                            ignitionPositions.add(Position.block(x, y, z));
+            BlockVector3 offset = clipboard.getMinimumPoint().subtract(clipboard.getOrigin());
+            for (int x = 0; x < dimensions.x(); x++) {
+                for (int y = 0; y < dimensions.y(); y++) {
+                    for (int z = 0; z < dimensions.z(); z++) {
+                        if (world.getWorld().getBlockAt(x + offset.x(), y + offset.y(), z + offset.z()).getType() == Material.EMERALD_BLOCK) {
+                            ignitionPositions.add(Position.block(x + offset.x(), y + offset.y(), z + offset.z()));
                         }
                     }
                 }
@@ -144,7 +145,7 @@ public class Experiment {
         if (Files.exists(schematicPath))
             return;
 
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("/schematics/" + schematicName)) {
+        try (InputStream stream = RedstoneProfiler.class.getResourceAsStream("/schematics/" + schematicName)) {
             if (stream == null)
                 throw new NullPointerException("Schematic " + schematicPath + " not found in jar");
 

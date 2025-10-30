@@ -64,12 +64,15 @@ public class ProfileCommand implements CommandExecutor {
         String fileName = "time_" + implementation.name() + ".csv";
         Path path = plugin.getDataPath().resolve("data").resolve(fileName);
         Files.createDirectories(path.getParent());
-        try (FileWriter fileWriter = new FileWriter(fileName)) {
+        Files.deleteIfExists(path);
+        Files.createFile(path);
+        try (FileWriter fileWriter = new FileWriter(path.toFile())) {
             int samples = results.powerOn().data().length;
             fileWriter.write("PowerOn,PowerOff\n");
             for (int i = 0; i < samples; i++) {
                 fileWriter.write(results.powerOn().data()[i] + "," + results.powerOff().data()[i] + "\n");
             }
+            fileWriter.flush();
         }
     }
 }
