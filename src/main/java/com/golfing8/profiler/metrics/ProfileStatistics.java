@@ -9,31 +9,31 @@ import java.math.RoundingMode;
 public record ProfileStatistics(long samples, long average, long max, long min, long sum, long average95, long max95,
                                 long min95, long sum95, double stdDev, long[] data) implements ProfilerResults {
 
-    public static ProfileStatistics construct(LongList statistics) {
+    public static ProfileStatistics construct(LongList samples) {
         long sum = 0L;
         long min = Long.MAX_VALUE, max = Long.MIN_VALUE;
 
-        for (long l : statistics) {
+        for (long l : samples) {
             sum += l;
 
             min = Math.min(min, l);
             max = Math.max(max, l);
         }
 
-        long average = sum / statistics.size();
+        long average = sum / samples.size();
         BigDecimal stdDevSum = BigDecimal.ZERO;
 
-        for (long l : statistics) {
+        for (long l : samples) {
             stdDevSum = stdDevSum.add(BigDecimal.valueOf(Math.pow(l - average, 2)));
         }
-        stdDevSum = stdDevSum.divide(BigDecimal.valueOf(statistics.size()), 2, RoundingMode.HALF_UP);
+        stdDevSum = stdDevSum.divide(BigDecimal.valueOf(samples.size()), 2, RoundingMode.HALF_UP);
 
         double stdDev = Math.sqrt(stdDevSum.doubleValue());
         double stdDev2 = stdDev * 2;
 
         long sum95 = 0;
         long min95 = Long.MAX_VALUE, max95 = Long.MIN_VALUE;
-        for (long l : statistics) {
+        for (long l : samples) {
             if (l < average - stdDev2 || l > average + stdDev2) {
                 continue;
             }
@@ -43,7 +43,7 @@ public record ProfileStatistics(long samples, long average, long max, long min, 
             max95 = Math.max(max95, l);
         }
 
-        long average95 = sum95 / statistics.size();
-        return new ProfileStatistics(statistics.size(), average, max, min, sum, average95, max95, min95, sum95, stdDev, statistics.toLongArray());
+        long average95 = sum95 / samples.size();
+        return new ProfileStatistics(samples.size(), average, max, min, sum, average95, max95, min95, sum95, stdDev, samples.toLongArray());
     }
 }
