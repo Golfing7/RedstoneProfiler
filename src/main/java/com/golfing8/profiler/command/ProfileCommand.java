@@ -1,7 +1,9 @@
 package com.golfing8.profiler.command;
 
 import com.golfing8.profiler.RedstoneProfiler;
+import com.golfing8.profiler.experiment.Experiment;
 import com.golfing8.profiler.experiment.ExperimentType;
+import com.golfing8.profiler.profiler.ProfilerMetrics;
 import com.golfing8.profiler.profiler.ProfilerTime;
 import io.papermc.paper.configuration.WorldConfiguration;
 import lombok.AllArgsConstructor;
@@ -33,24 +35,32 @@ public class ProfileCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        ProfilerTime profiler = new ProfilerTime(plugin.getWorld(), ExperimentType.FLOOD.getExperiment().apply(plugin.getWorld()));
+        Experiment experiment = ExperimentType.FLOOD.getExperiment().apply(plugin.getWorld());
+        ProfilerTime profilerTime = new ProfilerTime(plugin.getWorld(), experiment);
+        ProfilerMetrics profilerMetrics = new ProfilerMetrics(plugin.getWorld(), experiment);
 
         // Run the profiler to warm up first
         for (var implementation : REDSTONE_IMPLEMENTATIONS) {
             plugin.getWorld().setImplementation(implementation);
             sender.sendMessage("Running profiler warmup for " + EXPERIMENT_WARMUP + " iterations on " + implementation);
-            profiler.execute(EXPERIMENT_WARMUP);
+            profilerTime.execute(EXPERIMENT_WARMUP);
+            profilerMetrics.execute(EXPERIMENT_REPETITIONS);
 
             sender.sendMessage("Running profiler for " + EXPERIMENT_REPETITIONS + " iterations on " + implementation);
-            var data = profiler.execute(EXPERIMENT_REPETITIONS);
-            if (data.isEmpty()) {
+            var timeData = profilerTime.execute(EXPERIMENT_REPETITIONS);
+            if (timeData.isEmpty()) {
+                sender.sendMessage("Experiment failed. No data produced.");
+                return true;
+            }
+            var metricsData = profilerMetrics.execute(EXPERIMENT_REPETITIONS);
+            if (metricsData.isEmpty()) {
                 sender.sendMessage("Experiment failed. No data produced.");
                 return true;
             }
 
             try {
                 sender.sendMessage("Writing results for " + implementation);
-                writeResults(data.get(), implementation);
+                writeResults(timeData.get(), metricsData.get(), implementation);
             } catch (IOException exc) {
                 sender.sendMessage("Failed to write results. See console.");
                 plugin.getLogger().log(Level.SEVERE, "Failed to write results for implementation " + implementation, exc);
@@ -60,17 +70,22 @@ public class ProfileCommand implements CommandExecutor {
         return true;
     }
 
-    private void writeResults(ProfilerTime.Results results, WorldConfiguration.Misc.RedstoneImplementation implementation) throws IOException {
-        String fileName = "time_" + implementation.name() + ".csv";
+    private void writeResults(ProfilerTime.Results time, ProfilerMetrics.Results metrics, WorldConfiguration.Misc.RedstoneImplementation implementation) throws IOException {
+        String fileName = implementation.name() + ".csv";
         Path path = plugin.getDataPath().resolve("data").resolve(fileName);
         Files.createDirectories(path.getParent());
         Files.deleteIfExists(path);
         Files.createFile(path);
         try (FileWriter fileWriter = new FileWriter(path.toFile())) {
-            int samples = results.powerOn().data().length;
-            fileWriter.write("PowerOn,PowerOff\n");
+            int samples = time.powerOn().data().length;
+            fileWriter.write("PowerOnNanos,PowerOnPhysics,PowerOnRedstone,PowerOffNanos,PowerOffPhysics,PowerOffRedstone\n");
             for (int i = 0; i < samples; i++) {
-                fileWriter.write(results.powerOn().data()[i] + "," + results.powerOff().data()[i] + "\n");
+                fileWriter.write(time.powerOn().data()[i] + "," +
+                        metrics.powerOn().physics().data()[i] + "," +
+                        metrics.powerOn().redstone().data()[i] + "," +
+                        time.powerOff().data()[i] + "," +
+                        metrics.powerOff().physics().data()[i] + "," +
+                        metrics.powerOff().redstone().data()[i] + "\n");
             }
             fileWriter.flush();
         }
