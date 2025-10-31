@@ -3,6 +3,8 @@ package com.golfing8.profiler;
 import com.golfing8.profiler.command.ProfileCommand;
 import com.golfing8.profiler.listener.WorldListener;
 import com.golfing8.profiler.struct.ProfilingWorld;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,6 +12,8 @@ import java.util.Objects;
 
 @Getter
 public class RedstoneProfiler extends JavaPlugin {
+    @Getter
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     @Getter
     private static RedstoneProfiler instance;
     private WorldListener worldListener;

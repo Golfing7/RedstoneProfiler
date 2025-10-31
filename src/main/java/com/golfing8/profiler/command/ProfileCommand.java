@@ -5,6 +5,8 @@ import com.golfing8.profiler.experiment.Experiment;
 import com.golfing8.profiler.experiment.ExperimentType;
 import com.golfing8.profiler.profiler.ProfilerMetrics;
 import com.golfing8.profiler.profiler.ProfilerTime;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 import io.papermc.paper.configuration.WorldConfiguration;
 import lombok.AllArgsConstructor;
 import org.bukkit.command.Command;
@@ -12,6 +14,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,7 +38,20 @@ public class ProfileCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        Experiment experiment = ExperimentType.FLOOD.getExperiment().apply(plugin.getWorld());
+        ExperimentType experimentType;
+        if (args.length > 0) {
+            try {
+                experimentType = ExperimentType.valueOf(args[0].toUpperCase());
+            } catch (IllegalArgumentException exc) {
+                sender.sendMessage("Unrecognized experiment type " + args[0]);
+                return true;
+            }
+        } else {
+            experimentType = ExperimentType.FLOOD;
+        }
+
+        // Load the experiments
+        Experiment experiment = experimentType.getExperiment().apply(plugin.getWorld());
         ProfilerTime profilerTime = new ProfilerTime(plugin.getWorld(), experiment);
         ProfilerMetrics profilerMetrics = new ProfilerMetrics(plugin.getWorld(), experiment);
 
@@ -60,7 +76,7 @@ public class ProfileCommand implements CommandExecutor {
 
             try {
                 sender.sendMessage("Writing results for " + implementation);
-                writeResults(timeData.get(), metricsData.get(), implementation);
+                writeResults(experiment, timeData.get(), metricsData.get(), implementation);
             } catch (IOException exc) {
                 sender.sendMessage("Failed to write results. See console.");
                 plugin.getLogger().log(Level.SEVERE, "Failed to write results for implementation " + implementation, exc);
@@ -70,24 +86,31 @@ public class ProfileCommand implements CommandExecutor {
         return true;
     }
 
-    private void writeResults(ProfilerTime.Results time, ProfilerMetrics.Results metrics, WorldConfiguration.Misc.RedstoneImplementation implementation) throws IOException {
-        String fileName = implementation.name() + ".csv";
-        Path path = plugin.getDataPath().resolve("data").resolve(fileName);
-        Files.createDirectories(path.getParent());
-        Files.deleteIfExists(path);
-        Files.createFile(path);
-        try (FileWriter fileWriter = new FileWriter(path.toFile())) {
+    private void writeResults(Experiment experiment, ProfilerTime.Results time, ProfilerMetrics.Results metrics, WorldConfiguration.Misc.RedstoneImplementation implementation) throws IOException {
+        Path dataDirectory = plugin.getDataPath().resolve("data").resolve(experiment.getName()).resolve(implementation.name());
+        Path dataPath = dataDirectory.resolve("data.csv");
+        Files.createDirectories(dataPath.getParent());
+        Files.deleteIfExists(dataPath);
+        Files.createFile(dataPath);
+        try (BufferedWriter writer = Files.newBufferedWriter(dataPath)) {
             int samples = time.powerOn().data().length;
-            fileWriter.write("PowerOnNanos,PowerOnPhysics,PowerOnRedstone,PowerOffNanos,PowerOffPhysics,PowerOffRedstone\n");
+            writer.write("PowerOnNanos,PowerOnPhysics,PowerOnRedstone,PowerOffNanos,PowerOffPhysics,PowerOffRedstone\n");
             for (int i = 0; i < samples; i++) {
-                fileWriter.write(time.powerOn().data()[i] + "," +
+                writer.write(time.powerOn().data()[i] + "," +
                         metrics.powerOn().physics().data()[i] + "," +
                         metrics.powerOn().redstone().data()[i] + "," +
                         time.powerOff().data()[i] + "," +
                         metrics.powerOff().physics().data()[i] + "," +
                         metrics.powerOff().redstone().data()[i] + "\n");
             }
-            fileWriter.flush();
+        }
+
+        Path summaryPath = dataDirectory.resolve("summary.json");
+        JsonObject wrapper = new JsonObject();
+        wrapper.add("power_on", time.powerOn().getSummaryJson());
+        wrapper.add("power_off", time.powerOff().getSummaryJson());
+        try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
+            writer.write(RedstoneProfiler.getGson().toJson(wrapper));
         }
     }
 }
