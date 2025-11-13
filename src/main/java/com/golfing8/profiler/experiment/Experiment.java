@@ -95,6 +95,11 @@ public class Experiment {
      * Attempts to paste the schematic
      */
     private void tryPasteSchematic() {
+        if (schematicName == null) {
+            ignitionPositions = new ArrayList<>();
+            return;
+        }
+
         Path serverDataFolder = RedstoneProfiler.getInstance().getDataPath();
         Path schematicPath = serverDataFolder.resolve("schematics").resolve(schematicName);
         if (clipboard == null) {
@@ -140,6 +145,9 @@ public class Experiment {
     }
 
     private void loadSchematicFromJar() {
+        if (schematicName == null)
+            return;
+
         Path serverDataFolder = RedstoneProfiler.getInstance().getDataPath();
         Path schematicPath = serverDataFolder.resolve("schematics").resolve(schematicName);
         if (Files.exists(schematicPath))

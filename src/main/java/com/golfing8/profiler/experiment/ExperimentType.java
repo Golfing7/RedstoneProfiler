@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 @AllArgsConstructor @Getter
 public enum ExperimentType {
+    NULL((world) -> new Experiment("null", world, null)),
     FLOOD_1((world) -> new Experiment("flood_1", world, "flood_1.schem")),
     FLOOD_2((world) -> new Experiment("flood_2", world, "flood_2.schem")),
     FLOOD_3((world) -> new Experiment("flood_3", world, "flood_3.schem")),

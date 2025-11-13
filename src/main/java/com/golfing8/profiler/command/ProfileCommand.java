@@ -26,7 +26,7 @@ import java.util.logging.Level;
  */
 @AllArgsConstructor
 public class ProfileCommand implements CommandExecutor {
-    private static final int EXPERIMENT_WARMUP = 5;
+    private static final int EXPERIMENT_WARMUP = 50;
     private static final int EXPERIMENT_REPETITIONS = 100;
     private static final List<WorldConfiguration.Misc.RedstoneImplementation> REDSTONE_IMPLEMENTATIONS = List.of(
             WorldConfiguration.Misc.RedstoneImplementation.VANILLA,
