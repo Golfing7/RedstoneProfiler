@@ -6,7 +6,6 @@ import com.golfing8.profiler.experiment.ExperimentType;
 import com.golfing8.profiler.profiler.ProfilerMetrics;
 import com.golfing8.profiler.profiler.ProfilerTime;
 import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonWriter;
 import io.papermc.paper.configuration.WorldConfiguration;
 import lombok.AllArgsConstructor;
 import org.bukkit.command.Command;
@@ -15,10 +14,10 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -34,52 +33,74 @@ public class ProfileCommand implements CommandExecutor {
             WorldConfiguration.Misc.RedstoneImplementation.EIGENCRAFT,
             WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT
     );
+    private static final List<ExperimentType> EXPERIMENT_TYPES = List.of(
+            ExperimentType.FLOOD_1,
+            ExperimentType.FLOOD_2,
+            ExperimentType.FLOOD_3,
+            ExperimentType.FLOOD_4,
+            ExperimentType.FLOOD_5,
+            ExperimentType.FLOOD_6,
+            ExperimentType.FLOOD_7,
+            ExperimentType.FLOOD_8,
+            ExperimentType.FLOOD_9,
+            ExperimentType.FLOOD_10,
+            ExperimentType.FLOOD_11,
+            ExperimentType.FLOOD_12,
+            ExperimentType.FLOOD_13,
+            ExperimentType.FLOOD_14,
+            ExperimentType.FLOOD_15
+    );
     private final RedstoneProfiler plugin;
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        ExperimentType experimentType;
+        List<ExperimentType> experimentTypes = new ArrayList<>();
         if (args.length > 0) {
-            try {
-                experimentType = ExperimentType.valueOf(args[0].toUpperCase());
-            } catch (IllegalArgumentException exc) {
-                sender.sendMessage("Unrecognized experiment type " + args[0]);
-                return true;
+            String[] split = args[0].split(",");
+            for (String str : split) {
+                try {
+                    experimentTypes.add(ExperimentType.valueOf(str.toUpperCase()));
+                } catch (IllegalArgumentException exc) {
+                    sender.sendMessage("Unrecognized experiment type " + args[0]);
+                    return true;
+                }
             }
         } else {
-            experimentType = ExperimentType.FLOOD;
+            experimentTypes.addAll(EXPERIMENT_TYPES);
         }
 
         // Load the experiments
-        Experiment experiment = experimentType.getExperiment().apply(plugin.getWorld());
-        ProfilerTime profilerTime = new ProfilerTime(plugin.getWorld(), experiment);
-        ProfilerMetrics profilerMetrics = new ProfilerMetrics(plugin.getWorld(), experiment);
+        for (ExperimentType experimentType : experimentTypes) {
+            Experiment experiment = experimentType.getExperiment().apply(plugin.getWorld());
+            ProfilerTime profilerTime = new ProfilerTime(plugin.getWorld(), experiment);
+            ProfilerMetrics profilerMetrics = new ProfilerMetrics(plugin.getWorld(), experiment);
 
-        // Run the profiler to warm up first
-        for (var implementation : REDSTONE_IMPLEMENTATIONS) {
-            plugin.getWorld().setImplementation(implementation);
-            sender.sendMessage("Running profiler warmup for " + EXPERIMENT_WARMUP + " iterations on " + implementation);
-            profilerTime.execute(EXPERIMENT_WARMUP);
-            profilerMetrics.execute(EXPERIMENT_REPETITIONS);
+            // Run the profiler to warm up first
+            for (var implementation : REDSTONE_IMPLEMENTATIONS) {
+                plugin.getWorld().setImplementation(implementation);
+                sender.sendMessage("Running profiler warmup for " + EXPERIMENT_WARMUP + " iterations on " + implementation);
+                profilerTime.execute(EXPERIMENT_WARMUP);
+                profilerMetrics.execute(EXPERIMENT_REPETITIONS);
 
-            sender.sendMessage("Running profiler for " + EXPERIMENT_REPETITIONS + " iterations on " + implementation);
-            var timeData = profilerTime.execute(EXPERIMENT_REPETITIONS);
-            if (timeData.isEmpty()) {
-                sender.sendMessage("Experiment failed. No data produced.");
-                return true;
-            }
-            var metricsData = profilerMetrics.execute(EXPERIMENT_REPETITIONS);
-            if (metricsData.isEmpty()) {
-                sender.sendMessage("Experiment failed. No data produced.");
-                return true;
-            }
+                sender.sendMessage("Running profiler for " + EXPERIMENT_REPETITIONS + " iterations on " + implementation);
+                var timeData = profilerTime.execute(EXPERIMENT_REPETITIONS);
+                if (timeData.isEmpty()) {
+                    sender.sendMessage("Experiment failed. No data produced.");
+                    return true;
+                }
+                var metricsData = profilerMetrics.execute(EXPERIMENT_REPETITIONS);
+                if (metricsData.isEmpty()) {
+                    sender.sendMessage("Experiment failed. No data produced.");
+                    return true;
+                }
 
-            try {
-                sender.sendMessage("Writing results for " + implementation);
-                writeResults(experiment, timeData.get(), metricsData.get(), implementation);
-            } catch (IOException exc) {
-                sender.sendMessage("Failed to write results. See console.");
-                plugin.getLogger().log(Level.SEVERE, "Failed to write results for implementation " + implementation, exc);
+                try {
+                    sender.sendMessage("Writing results for " + implementation);
+                    writeResults(experiment, timeData.get(), metricsData.get(), implementation);
+                } catch (IOException exc) {
+                    sender.sendMessage("Failed to write results. See console.");
+                    plugin.getLogger().log(Level.SEVERE, "Failed to write results for implementation " + implementation, exc);
+                }
             }
         }
         sender.sendMessage("Completed all profiling");
